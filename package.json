@@ -5,9 +5,11 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/functions-framework": "^3.0.0",
+    "@types/google-spreadsheet": "^3.1.5",
     "axios": "^0.26.0",
     "dayjs": "^1.10.8",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "google-spreadsheet": "^3.2.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",

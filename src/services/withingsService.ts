@@ -3,11 +3,14 @@ import * as fs from 'fs';
 import axios from 'axios';
 import * as dayjs from 'dayjs';
 
-const tokensFilePath = `${__dirname}/../../auth/withingTokens.json`;
+export class WithingsService {
+  readonly tokensFilePath = `${__dirname}/../../auth/withingTokens.json`;
 
-export class Withings {
   constructor() {}
 
+  /**
+   * @description リフレッシュトークンをもとにアクセストークンを更新し、ファイルに書き込む
+   */
   async refreshToken() {
     const tokensJson = this.getTokensJson();
     const params: RefreshTokenParams = {
@@ -40,7 +43,7 @@ export class Withings {
         refreshToken: response.data.body.refresh_token,
       };
 
-      fs.writeFileSync(tokensFilePath, JSON.stringify(newTokens));
+      fs.writeFileSync(this.tokensFilePath, JSON.stringify(newTokens));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       throw new Error(
@@ -49,7 +52,15 @@ export class Withings {
     }
   }
 
-  async getBodyWeightRecords(startTimeStamp: number, endTimeStamp: number) {
+  /**
+   * @description 指定した期間の体重データを取得する
+   * @param startTimeStamp unix timestamp
+   * @param endTimeStamp unix timestamp
+   */
+  async getBodyWeightRecords(
+    startTimeStamp: number,
+    endTimeStamp: number
+  ): Promise<processedMeasureGroup[] | null> {
     const tokensJson = this.getTokensJson();
 
     const params: BodyWeightRequestParams = {
@@ -83,7 +94,11 @@ export class Withings {
         throw new Error(`Response status is ${response.data.status}`);
       }
 
-      return this.processBodyWeightRecord(
+      if (response.data.body.measuregrps.length === 0) {
+        return null;
+      }
+
+      return this.processBodyWeightRecords(
         response.data.body.measuregrps as measuregrp[]
       );
 
@@ -95,9 +110,12 @@ export class Withings {
     }
   }
 
-  private getTokensJson() {
+  /**
+   * @description トークンのJSONファイル読み込み
+   */
+  private getTokensJson(): WithingsTokens {
     try {
-      const rawData = fs.readFileSync(tokensFilePath, 'utf8');
+      const rawData = fs.readFileSync(this.tokensFilePath, 'utf8');
       return JSON.parse(rawData) as WithingsTokens;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -107,19 +125,22 @@ export class Withings {
     }
   }
 
-  private processBodyWeightRecord(
+  /**
+   * @description 取得した体重データを加工する
+   * @param measuregrps
+   */
+  private processBodyWeightRecords(
     measuregrps: measuregrp[]
-  ): prodessedMeasureGroup[] {
+  ): processedMeasureGroup[] {
     return measuregrps
       .map(measuregrp => {
-        console.log(measuregrp.measures);
         const measures = measuregrp.measures.map(measure => {
           return measure.value * Math.pow(10, measure.unit);
         });
 
         return {
           date: measuregrp.date,
-          formattedDate: dayjs.unix(measuregrp.date).format('YYYY/M/D'),
+          formattedDate: dayjs.unix(measuregrp.date).format('YYYY/MM/DD'),
           measures,
         };
       })

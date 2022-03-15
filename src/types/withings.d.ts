@@ -39,7 +39,7 @@ interface measure {
   fm: number;
 }
 
-interface prodessedMeasureGroup {
+interface processedMeasureGroup {
   date: number;
   formattedDate: string;
   measures: number[];
