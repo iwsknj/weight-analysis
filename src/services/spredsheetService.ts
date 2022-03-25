@@ -31,7 +31,7 @@ export class SpredsheetService {
     });
 
     await this.doc.loadInfo();
-    this.sheet = this.doc.sheetsByIndex[0];
+    this.sheet = this.doc.sheetsById[WorkSheet.sheetId];
     await this.sheet.loadHeaderRow();
 
     // 安全のため、シートのヘッダー行が意図している値になっているか確認する
@@ -84,7 +84,7 @@ export class SpredsheetService {
   async createDateRow(date: string): Promise<void> {
     const existsDayBeforeDateRecord = await this.existsDateRow(date);
     if (!existsDayBeforeDateRecord) {
-      this.sheet.addRow({
+      await this.sheet.addRow({
         [WorkSheet.headerColums.date.name]: date,
       });
       await this.loadRows();

@@ -10,6 +10,7 @@ export const helloWorld: HttpFunction = async (req, res) => {
   const withings = new WithingsService();
 
   try {
+    await withings.init();
     await withings.refreshToken();
 
     const now = dayjs();

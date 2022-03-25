@@ -1,24 +1,31 @@
 import {URLSearchParams} from 'url';
-import * as fs from 'fs';
+import {TokenService} from '../services/tokenService';
+import {TokenSheet} from '../config';
 import axios from 'axios';
 import * as dayjs from 'dayjs';
 
 export class WithingsService {
-  readonly tokensFilePath = `${__dirname}/../../auth/withingTokens.json`;
+  tokenService!: TokenService;
+  tokens!: {accessToken: string; refreshToken: string};
 
   constructor() {}
 
+  async init() {
+    this.tokenService = new TokenService();
+    await this.tokenService.init(TokenSheet.withingsSheetId);
+    this.tokens = await this.tokenService.getToken();
+  }
+
   /**
-   * @description リフレッシュトークンをもとにアクセストークンを更新し、ファイルに書き込む
+   * @description リフレッシュトークンをもとにアクセストークンを更新し、シートに書き込む
    */
   async refreshToken() {
-    const tokensJson = this.getTokensJson();
     const params: RefreshTokenParams = {
       action: 'requesttoken',
       grant_type: 'refresh_token',
       client_id: process.env.WITHINGS_CLIENT_ID as string,
       client_secret: process.env.WITHINGS_SECRET_KEY as string,
-      refresh_token: tokensJson.refreshToken,
+      refresh_token: this.tokens.refreshToken,
     };
 
     try {
@@ -38,12 +45,12 @@ export class WithingsService {
         throw new Error(`Response status is ${response.data.status}`);
       }
 
-      const newTokens: WithingsTokens = {
-        accessToken: response.data.body.access_token,
-        refreshToken: response.data.body.refresh_token,
-      };
-
-      fs.writeFileSync(this.tokensFilePath, JSON.stringify(newTokens));
+      this.tokens.accessToken = response.data.body.access_token as string;
+      this.tokens.refreshToken = response.data.body.refresh_token as string;
+      this.tokenService.saveToken(
+        this.tokens.accessToken,
+        this.tokens.refreshToken
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       throw new Error(
@@ -61,8 +68,6 @@ export class WithingsService {
     startTimeStamp: number,
     endTimeStamp: number
   ): Promise<processedMeasureGroup[] | null> {
-    const tokensJson = this.getTokensJson();
-
     const params: BodyWeightRequestParams = {
       action: 'getmeas',
       meastype: 1,
@@ -86,7 +91,7 @@ export class WithingsService {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: `Bearer ${tokensJson.accessToken}`,
+            Authorization: `Bearer ${this.tokens.accessToken}`,
           },
         }
       );
@@ -106,21 +111,6 @@ export class WithingsService {
     } catch (err: any) {
       throw new Error(
         `[Withings] 体重の取得に失敗しました。Error: ${err.message}`
-      );
-    }
-  }
-
-  /**
-   * @description トークンのJSONファイル読み込み
-   */
-  private getTokensJson(): WithingsTokens {
-    try {
-      const rawData = fs.readFileSync(this.tokensFilePath, 'utf8');
-      return JSON.parse(rawData) as WithingsTokens;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      throw new Error(
-        `[Withings] トークンファイルの読み込みに失敗しました。Error: ${err.message}`
       );
     }
   }

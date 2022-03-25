@@ -17,3 +17,8 @@ export const WorkSheet = {
     dailySteps: {name: '歩数', index: 5},
   },
 };
+
+export const TokenSheet = {
+  accessTokenCell: 'B1',
+  refreshTokenCell: 'B2',
+};
