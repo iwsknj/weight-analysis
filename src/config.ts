@@ -1,4 +1,4 @@
-export const WorkSheet = {
+export const workSheet = {
   headerValues: [
     '日付',
     '体重',
@@ -14,11 +14,17 @@ export const WorkSheet = {
     bmr: {name: '基礎代謝', index: 2},
     burnedCalorie: {name: '消費カロリー', index: 3},
     intakeCalorie: {name: '摂取カロリー', index: 4},
-    dailySteps: {name: '歩数', index: 5},
+    step: {name: '歩数', index: 5},
   },
 };
 
-export const TokenSheet = {
+export const tokenSheet = {
   accessTokenCell: 'B1',
   refreshTokenCell: 'B2',
 };
+
+export const age = 28;
+export const height = 178;
+
+export const withingsEndPoint = 'https://wbsapi.withings.net';
+export const fitbitEndPoint = 'https://api.fitbit.com';

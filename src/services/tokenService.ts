@@ -1,5 +1,5 @@
 import {GoogleSpreadsheet, GoogleSpreadsheetCell} from 'google-spreadsheet';
-import {TokenSheet} from '../config';
+import {tokenSheet} from '../config';
 import type {
   GoogleSpreadsheetWorksheet as GoogleSpreadsheetWorksheetType,
   GoogleSpreadsheet as GoogleSpreadsheetType,
@@ -19,7 +19,7 @@ export class TokenService {
   }
 
   /**
-   * @description 初期化・環境変数チェック・ヘッダーの整合性チェック
+   * 初期化・環境変数チェック・ヘッダーの整合性チェック
    */
   async init(sheetId: number) {
     if (!(this.sheetId && this.clientEmail && this.privateKey)) {
@@ -36,17 +36,17 @@ export class TokenService {
   }
 
   /**
-   * @description トークン取得
+   * トークン取得
    */
   async getToken(): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
     this.accessTokenCell = await this.sheet.getCellByA1(
-      TokenSheet.accessTokenCell
+      tokenSheet.accessTokenCell
     );
     this.refreshTokenCell = await this.sheet.getCellByA1(
-      TokenSheet.refreshTokenCell
+      tokenSheet.refreshTokenCell
     );
 
     return {
@@ -56,7 +56,7 @@ export class TokenService {
   }
 
   /**
-   * @description トークン保存
+   * トークン保存
    * @param accessToken
    * @param refreshToken
    */

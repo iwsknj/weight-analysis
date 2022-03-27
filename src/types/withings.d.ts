@@ -1,4 +1,4 @@
-interface RefreshTokenParams {
+export interface RefreshTokenParams {
   action: string;
   grant_type: string;
   client_id: string;
@@ -6,7 +6,7 @@ interface RefreshTokenParams {
   refresh_token: string;
 }
 
-interface BodyWeightRequestParams {
+export interface BodyWeightRequestParams {
   action: string;
   meastype: number;
   category: number;
@@ -14,12 +14,12 @@ interface BodyWeightRequestParams {
   enddate: number;
 }
 
-interface WithingsTokens {
+export interface WithingsTokens {
   accessToken: string;
   refreshToken: string;
 }
 
-interface measuregrp {
+export interface Measuregrp {
   grpid: number;
   attrib: number;
   date: number;
@@ -27,11 +27,11 @@ interface measuregrp {
   category: number;
   deviceid: string;
   hash_deviceid: string;
-  measures: measure[];
+  measures: Measure[];
   comment: string | null;
 }
 
-interface measure {
+export interface Measure {
   value: number;
   type: number;
   unit: number;
@@ -39,8 +39,9 @@ interface measure {
   fm: number;
 }
 
-interface processedMeasureGroup {
+export interface ProcessedMeasure {
   date: number;
   formattedDate: string;
-  measures: number[];
+  measure: number;
+  bmr: number;
 }

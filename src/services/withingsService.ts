@@ -1,8 +1,11 @@
-import {URLSearchParams} from 'url';
-import {TokenService} from '../services/tokenService';
-import {TokenSheet} from '../config';
 import axios from 'axios';
+import BigNumber from 'bignumber.js';
 import * as dayjs from 'dayjs';
+
+import {URLSearchParams} from 'url';
+import {TokenService} from './tokenService';
+import * as WithingsTypes from '../types/withings';
+import {age, height, withingsEndPoint} from '../config';
 
 export class WithingsService {
   tokenService!: TokenService;
@@ -12,15 +15,17 @@ export class WithingsService {
 
   async init() {
     this.tokenService = new TokenService();
-    await this.tokenService.init(TokenSheet.withingsSheetId);
+    await this.tokenService.init(
+      parseInt(process.env.WITHINGS_TOKEN_SHEET_ID as string)
+    );
     this.tokens = await this.tokenService.getToken();
   }
 
   /**
-   * @description リフレッシュトークンをもとにアクセストークンを更新し、シートに書き込む
+   * リフレッシュトークンをもとにアクセストークンを更新し、シートに書き込む
    */
   async refreshToken() {
-    const params: RefreshTokenParams = {
+    const params: WithingsTypes.RefreshTokenParams = {
       action: 'requesttoken',
       grant_type: 'refresh_token',
       client_id: process.env.WITHINGS_CLIENT_ID as string,
@@ -31,11 +36,14 @@ export class WithingsService {
     try {
       const searchParams = new URLSearchParams();
       Object.keys(params).forEach(key => {
-        searchParams.append(key, params[key as keyof RefreshTokenParams]);
+        searchParams.append(
+          key,
+          params[key as keyof WithingsTypes.RefreshTokenParams]
+        );
       });
 
       const response = await axios.post(
-        `${process.env.WITHINGS_ENDPOINT}/v2/oauth2`,
+        `${withingsEndPoint}/v2/oauth2`,
         searchParams,
         {
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -60,15 +68,15 @@ export class WithingsService {
   }
 
   /**
-   * @description 指定した期間の体重データを取得する
+   * 指定した期間の体重データを取得する
    * @param startTimeStamp unix timestamp
    * @param endTimeStamp unix timestamp
    */
   async getBodyWeightRecords(
     startTimeStamp: number,
     endTimeStamp: number
-  ): Promise<processedMeasureGroup[] | null> {
-    const params: BodyWeightRequestParams = {
+  ): Promise<WithingsTypes.ProcessedMeasure[] | null> {
+    const params: WithingsTypes.BodyWeightRequestParams = {
       action: 'getmeas',
       meastype: 1,
       category: 1,
@@ -81,12 +89,12 @@ export class WithingsService {
       Object.keys(params).forEach(key => {
         searchParams.append(
           key,
-          params[key as keyof BodyWeightRequestParams].toString()
+          params[key as keyof WithingsTypes.BodyWeightRequestParams].toString()
         );
       });
 
       const response = await axios.post(
-        `${process.env.WITHINGS_ENDPOINT}/measure`,
+        `${withingsEndPoint}/measure`,
         searchParams,
         {
           headers: {
@@ -104,7 +112,7 @@ export class WithingsService {
       }
 
       return this.processBodyWeightRecords(
-        response.data.body.measuregrps as measuregrp[]
+        response.data.body.measuregrps as WithingsTypes.Measuregrp[]
       );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,12 +124,12 @@ export class WithingsService {
   }
 
   /**
-   * @description 取得した体重データを加工する
+   * 取得した体重データを加工する
    * @param measuregrps
    */
   private processBodyWeightRecords(
-    measuregrps: measuregrp[]
-  ): processedMeasureGroup[] {
+    measuregrps: WithingsTypes.Measuregrp[]
+  ): WithingsTypes.ProcessedMeasure[] {
     return measuregrps
       .map(measuregrp => {
         const measures = measuregrp.measures.map(measure => {
@@ -131,11 +139,34 @@ export class WithingsService {
         return {
           date: measuregrp.date,
           formattedDate: dayjs.unix(measuregrp.date).format('YYYY/MM/DD'),
-          measures,
+          measure: measures[0],
+          bmr: this.calculateBmr(measures[0]),
         };
       })
       .sort((a, b) => {
         return a.date - b.date;
       });
+  }
+
+  /**
+   * 体重から基礎代謝を計算する
+   *
+   * 式：https://keisan.casio.jp/exec/system/1161228736
+   *
+   * @param weight
+   */
+  private calculateBmr(weight: number): number {
+    let x = new BigNumber(weight);
+    let y = new BigNumber(height);
+    let z = new BigNumber(age);
+    x = x.multipliedBy(13.397);
+    y = y.multipliedBy(4.799);
+    z = z.multipliedBy(5.677);
+    return x
+      .plus(y)
+      .minus(z)
+      .plus(88.362)
+      .decimalPlaces(0, BigNumber.ROUND_DOWN)
+      .toNumber();
   }
 }

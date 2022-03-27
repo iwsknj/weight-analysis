@@ -8,6 +8,7 @@
     "@slack/webhook": "^6.1.0",
     "@types/google-spreadsheet": "^3.1.5",
     "axios": "^0.26.0",
+    "bignumber.js": "^9.0.2",
     "dayjs": "^1.10.8",
     "dotenv": "^16.0.0",
     "google-spreadsheet": "^3.2.0"
@@ -29,7 +30,7 @@
     "prepare": "yarn run compile",
     "pretest": "yarn run compile",
     "posttest": "yarn run lint",
-    "start": "functions-framework --source=build/src/ --target=helloWorld",
-    "watch": "concurrently \"tsc -w\" \"nodemon --watch ./build/ --ignore ./build/auth/ --exec npm run start\""
+    "start": "functions-framework --source=build/src/ --target=recordHealthCareData --signature-type=event",
+    "watch": "concurrently \"tsc -w\" \"nodemon --watch ./build/ --exec yarn start\""
   }
 }

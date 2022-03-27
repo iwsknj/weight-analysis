@@ -1,12 +1,12 @@
 import {GoogleSpreadsheet, GoogleSpreadsheetRow} from 'google-spreadsheet';
-import {WorkSheet} from '../config';
+import {workSheet} from '../config';
 import type {
   GoogleSpreadsheetWorksheet as GoogleSpreadsheetWorksheetType,
   GoogleSpreadsheet as GoogleSpreadsheetType,
 } from 'google-spreadsheet';
 
 export class SpredsheetService {
-  readonly sheetHeaderValues = WorkSheet.headerValues;
+  readonly sheetHeaderValues = workSheet.headerValues;
   readonly sheetId = process.env.SHEET_ID || '';
   readonly clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
   readonly privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
@@ -19,7 +19,7 @@ export class SpredsheetService {
   }
 
   /**
-   * @description 初期化・環境変数チェック・ヘッダーの整合性チェック
+   * 初期化・環境変数チェック・ヘッダーの整合性チェック
    */
   async init() {
     if (!(this.sheetId && this.clientEmail && this.privateKey)) {
@@ -31,7 +31,7 @@ export class SpredsheetService {
     });
 
     await this.doc.loadInfo();
-    this.sheet = this.doc.sheetsById[WorkSheet.sheetId];
+    this.sheet = this.doc.sheetsById[parseInt(process.env.MAIN_SHEET_ID || '')];
     await this.sheet.loadHeaderRow();
 
     // 安全のため、シートのヘッダー行が意図している値になっているか確認する
@@ -50,55 +50,91 @@ export class SpredsheetService {
   }
 
   /**
-   * @description すべての行を読み込む
+   * すべての行を読み込む
    */
   async loadRows() {
     this.rows = await this.sheet.getRows();
+    return;
   }
 
   /**
-   * @description 前日の記録があるかチェック
+   * 前日の記録があるかチェック
    * @param 日付（YYYY/MM/DD）
    */
   async existsDateRow(date: string): Promise<boolean> {
     return (
-      this.rows.filter(row => row[WorkSheet.headerColums.date.name] === date)
+      this.rows.filter(row => row[workSheet.headerColums.date.name] === date)
         .length > 0
     );
   }
 
   /**
-   * @description 指定した日付の行を取り出す
+   * 指定した日付の行を取り出す
    * @param date
    */
   getRowByDate(date: string): GoogleSpreadsheetRow {
     return this.rows.filter(
-      row => row[WorkSheet.headerColums.date.name] === date
+      row => row[workSheet.headerColums.date.name] === date
     )[0];
   }
 
   /**
-   * @description 指定した日付の行を作成する（存在していたら無視）
+   * 指定した日付の行を作成する（存在していたら無視）
    * @param date
    */
   async createDateRow(date: string): Promise<void> {
     const existsDayBeforeDateRecord = await this.existsDateRow(date);
     if (!existsDayBeforeDateRecord) {
       await this.sheet.addRow({
-        [WorkSheet.headerColums.date.name]: date,
+        [workSheet.headerColums.date.name]: date,
       });
       await this.loadRows();
     }
   }
 
   /**
-   * @description 指定した日付に体重を記録する
+   * 指定した日付に体重を記録する
    * @param date
    * @param weight
    */
-  async recordWeight(date: string, weight: number): Promise<void> {
+  async recordWeight(date: string, weight: number, bmr: number): Promise<void> {
     const row = this.getRowByDate(date);
-    row[WorkSheet.headerColums.weight.name] = weight;
-    await row.save();
+    if (
+      !row[workSheet.headerColums.weight.name] ||
+      !row[workSheet.headerColums.bmr.name]
+    ) {
+      row[workSheet.headerColums.weight.name] = weight;
+      row[workSheet.headerColums.bmr.name] = bmr;
+      await row.save();
+    }
+  }
+
+  /**
+   * 指定した日付に歩数を記録する
+   * @param date
+   * @param step
+   */
+  async recordStep(date: string, step: string): Promise<void> {
+    const row = this.getRowByDate(date);
+    if (!row[workSheet.headerColums.step.name]) {
+      row[workSheet.headerColums.step.name] = step;
+      await row.save();
+    }
+  }
+
+  /**
+   * 指定した日付に消費カロリーを記録する
+   * @param date
+   * @param burnedCalorie
+   */
+  async recordBurnedCalorie(
+    date: string,
+    burnedCalorie: string
+  ): Promise<void> {
+    const row = this.getRowByDate(date);
+    if (!row[workSheet.headerColums.burnedCalorie.name]) {
+      row[workSheet.headerColums.burnedCalorie.name] = burnedCalorie;
+      await row.save();
+    }
   }
 }
