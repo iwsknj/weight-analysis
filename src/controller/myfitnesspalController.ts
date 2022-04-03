@@ -15,7 +15,7 @@ export async function recordIntakePfc() {
   // 下限値のカロリーより低かったら除外する
   if (
     !pfc ||
-    pfc.totalCalorie !== '' ||
+    pfc.totalCalorie === '' ||
     Number(pfc.totalCalorie) <= lowerLimitCalorie
   ) {
     return;
