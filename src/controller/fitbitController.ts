@@ -2,7 +2,7 @@ import {FitbitService} from '../services/fitbitService';
 import * as dayjs from 'dayjs';
 import {SpredsheetService} from '../services/spredsheetService';
 
-export async function recordActivityFromFitbit() {
+export async function recordActivity() {
   const fitbit = new FitbitService();
   await fitbit.init();
   await fitbit.refreshToken();
@@ -13,27 +13,33 @@ export async function recordActivityFromFitbit() {
 
   const spredsheetService = new SpredsheetService();
   await spredsheetService.init();
-  await spredsheetService.createDateRow(dayBeforeDate);
 
   // 歩数収録して記録
-  const steps = await fitbit.getSteps(dayBefore.format('YYYY-MM-DD'), '1d');
-  if (steps.length > 0) {
-    const dayBeforeStep = steps.find(step => step.dateTime === dayBeforeDate);
+  const steps = await fitbit.getStepsByDate(
+    dayBefore.format('YYYY-MM-DD'),
+    '1d'
+  );
 
-    if (dayBeforeStep) {
-      await spredsheetService.recordStep(dayBeforeDate, dayBeforeStep.value);
-    }
+  // 歩数がない場合はつけ忘れだからカロリーも記録しない
+  if (steps.length === 0) {
+    return;
   }
+  const dayBeforeStep = steps.find(step => step.date === dayBeforeDate);
+
+  if (!dayBeforeStep) {
+    return;
+  }
+  await spredsheetService.recordStep(dayBeforeDate, dayBeforeStep.value);
 
   // カロリー取得して記録
-  const calories = await fitbit.getCalories(
+  const calories = await fitbit.getCaloriesByDate(
     dayBefore.format('YYYY-MM-DD'),
     '1d'
   );
 
   if (calories.length > 0) {
     const dayBeforeCalorie = calories.find(
-      calorie => calorie.dateTime === dayBeforeDate
+      calorie => calorie.date === dayBeforeDate
     );
 
     if (dayBeforeCalorie) {

@@ -5,6 +5,10 @@ import type {
   GoogleSpreadsheet as GoogleSpreadsheetType,
 } from 'google-spreadsheet';
 
+import * as MyfitnesspalTypes from '../types/myfitnesspal';
+import * as FitbitTypes from '../types/fitbit';
+import * as WithingsTypes from '../types/withings';
+
 export class SpredsheetService {
   readonly sheetHeaderValues = workSheet.headerValues;
   readonly sheetId = process.env.SHEET_ID || '';
@@ -98,14 +102,34 @@ export class SpredsheetService {
    * @param weight
    */
   async recordWeight(date: string, weight: number, bmr: number): Promise<void> {
+    await this.createDateRow(date);
+
     const row = this.getRowByDate(date);
-    if (
-      !row[workSheet.headerColums.weight.name] ||
-      !row[workSheet.headerColums.bmr.name]
-    ) {
-      row[workSheet.headerColums.weight.name] = weight;
-      row[workSheet.headerColums.bmr.name] = bmr;
-      await row.save();
+    row[workSheet.headerColums.weight.name] = weight;
+    row[workSheet.headerColums.bmr.name] = bmr;
+    await row.save();
+  }
+
+  /**
+   * 複数のアクティビティをまとめて登録する
+   * @param activities
+   */
+  async recordWeights(
+    weights: WithingsTypes.ProcessedMeasure[]
+  ): Promise<void> {
+    for (let i = 0; i < weights.length; i++) {
+      if (await this.existsDateRow(weights[i].formattedDate)) {
+        const row = this.getRowByDate(weights[i].formattedDate);
+        row[workSheet.headerColums.weight.name] = weights[i].measure;
+        row[workSheet.headerColums.bmr.name] = weights[i].bmr;
+        await row.save();
+      } else {
+        await this.sheet.addRow({
+          [workSheet.headerColums.date.name]: weights[i].date,
+          [workSheet.headerColums.weight.name]: weights[i].measure,
+          [workSheet.headerColums.bmr.name]: weights[i].bmr,
+        });
+      }
     }
   }
 
@@ -115,11 +139,11 @@ export class SpredsheetService {
    * @param step
    */
   async recordStep(date: string, step: string): Promise<void> {
+    await this.createDateRow(date);
+
     const row = this.getRowByDate(date);
-    if (!row[workSheet.headerColums.step.name]) {
-      row[workSheet.headerColums.step.name] = step;
-      await row.save();
-    }
+    row[workSheet.headerColums.step.name] = step;
+    await row.save();
   }
 
   /**
@@ -131,10 +155,75 @@ export class SpredsheetService {
     date: string,
     burnedCalorie: string
   ): Promise<void> {
+    await this.createDateRow(date);
+
     const row = this.getRowByDate(date);
-    if (!row[workSheet.headerColums.burnedCalorie.name]) {
-      row[workSheet.headerColums.burnedCalorie.name] = burnedCalorie;
-      await row.save();
+    row[workSheet.headerColums.burnedCalorie.name] = burnedCalorie;
+    await row.save();
+  }
+
+  /**
+   * 複数のアクティビティをまとめて登録する
+   * @param activities
+   */
+  async recordActivities(
+    activities: FitbitTypes.ProcessedActivitiesValue[]
+  ): Promise<void> {
+    for (let i = 0; i < activities.length; i++) {
+      if (await this.existsDateRow(activities[i].date)) {
+        const row = this.getRowByDate(activities[i].date);
+        row[workSheet.headerColums.burnedCalorie.name] = activities[i].calorie;
+        row[workSheet.headerColums.step.name] = activities[i].step;
+        await row.save();
+      } else {
+        await this.sheet.addRow({
+          [workSheet.headerColums.date.name]: activities[i].date,
+          [workSheet.headerColums.burnedCalorie.name]: activities[i].calorie,
+          [workSheet.headerColums.step.name]: activities[i].step,
+        });
+      }
+    }
+  }
+
+  /**
+   * 摂取カロリーとPFCを記録
+   * @param date
+   * @param values
+   */
+  async recordIntakePfc(date: string, values: MyfitnesspalTypes.Pfc) {
+    await this.createDateRow(date);
+
+    const row = this.getRowByDate(date);
+    row[workSheet.headerColums.intakeCalorie.name] = values.totalCalorie;
+    row[workSheet.headerColums.intakeCarbo.name] = values.carbo;
+    row[workSheet.headerColums.intakeFat.name] = values.fat;
+    row[workSheet.headerColums.intakeProtain.name] = values.protain;
+    await row.save();
+  }
+
+  /**
+   * 複数の摂取カロリーとPFCを記録
+   * @param date
+   * @param values
+   */
+  async recordIntakePfcs(pfcs: MyfitnesspalTypes.Pfc[]) {
+    for (let i = 0; i < pfcs.length; i++) {
+      if (await this.existsDateRow(pfcs[i].date)) {
+        const row = this.getRowByDate(pfcs[i].date);
+        row[workSheet.headerColums.intakeCalorie.name] = pfcs[i].totalCalorie;
+        row[workSheet.headerColums.intakeCarbo.name] = pfcs[i].carbo;
+        row[workSheet.headerColums.intakeFat.name] = pfcs[i].fat;
+        row[workSheet.headerColums.intakeProtain.name] = pfcs[i].protain;
+        await row.save();
+      } else {
+        await this.sheet.addRow({
+          [workSheet.headerColums.date.name]: pfcs[i].date,
+          [workSheet.headerColums.intakeCalorie.name]: pfcs[i].totalCalorie,
+          [workSheet.headerColums.intakeCarbo.name]: pfcs[i].carbo,
+          [workSheet.headerColums.intakeFat.name]: pfcs[i].fat,
+          [workSheet.headerColums.intakeProtain.name]: pfcs[i].protain,
+        });
+      }
     }
   }
 }

@@ -3,7 +3,18 @@ export interface RefreshTokenParams {
   refresh_token: string;
 }
 
-export interface ActivityValue {
+export interface ResponseActivityValue {
   dateTime: string;
   value: string;
+}
+
+export interface ProcessedActivityValue {
+  date: string;
+  value: string;
+}
+
+export interface ProcessedActivitiesValue {
+  date: string;
+  step: string;
+  calorie: string;
 }

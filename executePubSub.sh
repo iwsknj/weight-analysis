@@ -1,3 +1,22 @@
+#!/bin/sh
+set -e
+
+case $1 in
+  "fitbit" )
+    data='Zml0Yml0'
+    ;;
+  "withings" )
+    data='d2l0aGluZ3M='
+    ;;
+  "myfitnesspal" )
+    data='bXlmaXRuZXNzcGFs'
+    ;;
+  * )
+    echo 'Arugument not set'
+    exit
+    ;;
+esac
+
 curl localhost:8080 \
   -X POST \
   -H "Content-Type: application/json" \
@@ -17,6 +36,6 @@ curl localhost:8080 \
           "attributes": {
              "attr1":"attr1-value"
           },
-          "data": "d29ybGQ=",
+          "data": "'"$data"'"
         }
       }'

@@ -1,14 +1,13 @@
 import {URLSearchParams} from 'url';
 import axios from 'axios';
-import * as dayjs from 'dayjs';
 
 import {TokenService} from './tokenService';
 import * as FitbitTypes from '../types/fitbit';
-import {fitbitEndPoint} from '../config';
+import {fitbitBaseUrl, lowerLimitStep} from '../config';
 
 export class FitbitService {
-  tokenService!: TokenService;
-  tokens!: {accessToken: string; refreshToken: string};
+  private tokenService!: TokenService;
+  private tokens!: {accessToken: string; refreshToken: string};
 
   constructor() {}
 
@@ -42,7 +41,7 @@ export class FitbitService {
       });
 
       const response = await axios.post(
-        `${fitbitEndPoint}/oauth2/token`,
+        `${fitbitBaseUrl}/oauth2/token`,
         searchParams,
         {
           headers: {
@@ -75,17 +74,49 @@ export class FitbitService {
   }
 
   /**
-   *
+   * 歩数を期間を指定して取得
    * @param endDate YYYY-MM-DD
    * @param period サポートしている期間「1d | 7d | 30d | 1w | 1m | 3m | 6m | 1y」
    */
-  async getSteps(
+  async getStepsByDate(
     endDate: string,
     period: string
-  ): Promise<FitbitTypes.ActivityValue[]> {
+  ): Promise<FitbitTypes.ProcessedActivityValue[]> {
     try {
       const response = await axios.get(
-        `${fitbitEndPoint}/1/user/-/activities/steps/date/${endDate}/${period}.json`,
+        `${fitbitBaseUrl}/1/user/-/activities/steps/date/${endDate}/${period}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.tokens.accessToken}`,
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error(response.data.errors);
+      }
+
+      return this.proccessStepRecords(response.data['activities-steps']);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      throw new Error(
+        `[Fitbit] 歩数の取得に失敗しました。Error: ${err.message}`
+      );
+    }
+  }
+
+  /**
+   * 歩数を日付期間で取得
+   * @param startDate YYYY-MM-DD
+   * @param endDate YYYY-MM-DD
+   */
+  async getStepsByDateRange(
+    startDate: string,
+    endDate: string
+  ): Promise<FitbitTypes.ProcessedActivityValue[]> {
+    try {
+      const response = await axios.get(
+        `${fitbitBaseUrl}/1/user/-/activities/steps/date/${startDate}/${endDate}.json`,
         {
           headers: {
             Authorization: `Bearer ${this.tokens.accessToken}`,
@@ -112,30 +143,30 @@ export class FitbitService {
    * @param steps
    */
   private proccessStepRecords(
-    steps: FitbitTypes.ActivityValue[]
-  ): FitbitTypes.ActivityValue[] {
+    steps: FitbitTypes.ResponseActivityValue[]
+  ): FitbitTypes.ProcessedActivityValue[] {
     return steps
-      .filter(step => step.value !== '0')
+      .filter(step => Number(step.value) > lowerLimitStep)
       .map(step => {
         return {
-          dateTime: step.dateTime.replace(/-/g, '/'),
+          date: step.dateTime.replace(/-/g, '/'),
           value: step.value,
         };
       });
   }
 
   /**
-   * カロリーを取得
+   * カロリーを期間を指定して取得
    * @param endDate YYYY-MM-DD
    * @param period サポートしている期間「1d | 7d | 30d | 1w | 1m | 3m | 6m | 1y」
    */
-  async getCalories(
+  async getCaloriesByDate(
     endDate: string,
     period: string
-  ): Promise<FitbitTypes.ActivityValue[]> {
+  ): Promise<FitbitTypes.ProcessedActivityValue[]> {
     try {
       const response = await axios.get(
-        `${fitbitEndPoint}/1/user/-/activities/calories/date/${endDate}/${period}.json`,
+        `${fitbitBaseUrl}/1/user/-/activities/calories/date/${endDate}/${period}.json`,
         {
           headers: {
             Authorization: `Bearer ${this.tokens.accessToken}`,
@@ -157,18 +188,50 @@ export class FitbitService {
   }
 
   /**
-   * 歩数データの加工
-   * 歩数が0のデータは除外
+   * カロリーを日付期間で取得
+   * @param starDate YYYY-MM-DD
+   * @param endDate YYYY-MM-DD
+   */
+  async getCaloriesByDateRange(
+    startDate: string,
+    endDate: string
+  ): Promise<FitbitTypes.ProcessedActivityValue[]> {
+    try {
+      const response = await axios.get(
+        `${fitbitBaseUrl}/1/user/-/activities/calories/date/${startDate}/${endDate}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.tokens.accessToken}`,
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error(response.data.errors);
+      }
+
+      return this.proccessCalorieRecords(response.data['activities-calories']);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      throw new Error(
+        `[Fitbit] カロリーの取得に失敗しました。Error: ${err.message}`
+      );
+    }
+  }
+
+  /**
+   * カロリーデータの加工
+   * 消費カロリーが1800未満の場合は装着していないから除外
    * @param steps
    */
   private proccessCalorieRecords(
-    calories: FitbitTypes.ActivityValue[]
-  ): FitbitTypes.ActivityValue[] {
+    calories: FitbitTypes.ResponseActivityValue[]
+  ): FitbitTypes.ProcessedActivityValue[] {
     return calories
-      .filter(calorie => calorie.value !== '0')
+      .filter(calorie => Number(calorie.value) > 1800)
       .map(calorie => {
         return {
-          dateTime: calorie.dateTime.replace(/-/g, '/'),
+          date: calorie.dateTime.replace(/-/g, '/'),
           value: calorie.value,
         };
       });

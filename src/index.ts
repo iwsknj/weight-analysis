@@ -1,28 +1,28 @@
-import {recordWeightFromWithings} from './functions/withings';
-import {recordActivityFromFitbit} from './functions/fitbit';
+import {recordWeight} from './controller/withingsController';
+import {recordActivity} from './controller/fitbitController';
+import {recordIntakePfc} from './controller/myfitnesspalController';
 import {SlackService} from './services/slackService';
 require('dotenv').config();
 
-export async function recordHealthCareData(message: any, context: any) {
-  if (!message.data) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+exports.recordHealthCareData = async (message: any, _context: any) => {
+  const functionName =
+    Buffer.from(message.data as string, 'base64').toString() || '';
+
+  if (!functionName) {
     return;
   }
-
-  const functionName = JSON.parse(
-    Buffer.from(message.data as string, 'base64').toString()
-  );
-
-  const slack = new SlackService();
 
   try {
     switch (functionName) {
       case 'withings':
-        await recordWeightFromWithings();
+        await recordWeight();
         break;
       case 'fitbit':
-        await recordActivityFromFitbit();
+        await recordActivity();
         break;
       case 'myfitnesspal':
+        await recordIntakePfc();
         break;
       default:
         break;
@@ -31,6 +31,7 @@ export async function recordHealthCareData(message: any, context: any) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     console.error(err.message);
+    const slack = new SlackService();
     slack.sendMessageWithAppName(err.message);
   }
-}
+};

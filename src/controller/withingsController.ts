@@ -2,7 +2,7 @@ import {WithingsService} from '../services/withingsService';
 import * as dayjs from 'dayjs';
 import {SpredsheetService} from '../services/spredsheetService';
 
-export async function recordWeightFromWithings() {
+export async function recordWeight() {
   const withings = new WithingsService();
 
   await withings.init();
@@ -30,7 +30,6 @@ export async function recordWeightFromWithings() {
 
   const spredsheetService = new SpredsheetService();
   await spredsheetService.init();
-  await spredsheetService.createDateRow(dayBeforeDate);
   await spredsheetService.recordWeight(
     dayBeforeDate,
     dayBeforeRecord.measure,

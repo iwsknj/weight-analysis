@@ -5,7 +5,7 @@ import * as dayjs from 'dayjs';
 import {URLSearchParams} from 'url';
 import {TokenService} from './tokenService';
 import * as WithingsTypes from '../types/withings';
-import {age, height, withingsEndPoint} from '../config';
+import {age, height, withingsBaseUrl} from '../config';
 
 export class WithingsService {
   tokenService!: TokenService;
@@ -43,7 +43,7 @@ export class WithingsService {
       });
 
       const response = await axios.post(
-        `${withingsEndPoint}/v2/oauth2`,
+        `${withingsBaseUrl}/v2/oauth2`,
         searchParams,
         {
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -94,7 +94,7 @@ export class WithingsService {
       });
 
       const response = await axios.post(
-        `${withingsEndPoint}/measure`,
+        `${withingsBaseUrl}/measure`,
         searchParams,
         {
           headers: {
@@ -136,6 +136,7 @@ export class WithingsService {
           return measure.value * Math.pow(10, measure.unit);
         });
 
+        // 同日で複数記録されている可能性があるので、最初の記録を返す
         return {
           date: measuregrp.date,
           formattedDate: dayjs.unix(measuregrp.date).format('YYYY/MM/DD'),
