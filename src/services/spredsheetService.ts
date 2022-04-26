@@ -11,7 +11,7 @@ import * as WithingsTypes from '../types/withings';
 
 export class SpredsheetService {
   readonly sheetHeaderValues = workSheet.headerValues;
-  readonly sheetId = process.env.SHEET_ID || '';
+  readonly spreadSheetId = process.env.SPREAD_SHEET_ID || '';
   readonly clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
   readonly privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
   doc: GoogleSpreadsheetType;
@@ -19,14 +19,14 @@ export class SpredsheetService {
   rows!: GoogleSpreadsheetRow[];
 
   constructor() {
-    this.doc = new GoogleSpreadsheet(this.sheetId);
+    this.doc = new GoogleSpreadsheet(this.spreadSheetId);
   }
 
   /**
    * 初期化・環境変数チェック・ヘッダーの整合性チェック
    */
   async init() {
-    if (!(this.sheetId && this.clientEmail && this.privateKey)) {
+    if (!(this.spreadSheetId && this.clientEmail && this.privateKey)) {
       throw new Error('[Spredsheet] 環境変数が不足しています。');
     }
     await this.doc.useServiceAccountAuth({

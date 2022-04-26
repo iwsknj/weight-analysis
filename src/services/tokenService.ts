@@ -6,7 +6,7 @@ import type {
 } from 'google-spreadsheet';
 
 export class TokenService {
-  readonly sheetId = process.env.SHEET_ID || '';
+  readonly tokenSpreadSheetId = process.env.TOKEN_SPREAD_SHEET_ID || '';
   readonly clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
   readonly privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
   doc: GoogleSpreadsheetType;
@@ -15,14 +15,14 @@ export class TokenService {
   refreshTokenCell!: GoogleSpreadsheetCell;
 
   constructor() {
-    this.doc = new GoogleSpreadsheet(this.sheetId);
+    this.doc = new GoogleSpreadsheet(this.tokenSpreadSheetId);
   }
 
   /**
    * 初期化・環境変数チェック・ヘッダーの整合性チェック
    */
   async init(sheetId: number) {
-    if (!(this.sheetId && this.clientEmail && this.privateKey)) {
+    if (!(this.tokenSpreadSheetId && this.clientEmail && this.privateKey)) {
       throw new Error('[Spredsheet] 環境変数が不足しています。');
     }
     await this.doc.useServiceAccountAuth({

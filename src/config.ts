@@ -9,6 +9,7 @@ export const workSheet = {
     '脂質',
     'タンパク質',
     '歩数',
+    '体温',
   ],
 
   headerColums: {
@@ -21,6 +22,7 @@ export const workSheet = {
     intakeFat: {name: '脂質', index: 7},
     intakeProtain: {name: 'タンパク質', index: 8},
     step: {name: '歩数', index: 9},
+    bodyTemperature: {name: '体温', index: 10},
   },
 };
 
