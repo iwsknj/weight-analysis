@@ -17,3 +17,26 @@ $ gcloud functions deploy recordHealthCareData --runtime nodejs16 \
    --trigger-event google.pubsub.topic.publish \
    --project [PROJECT_ID]
 ```
+
+## ローカルでのCloud functionsの実行方法(pubsub)
+
+functions-frameworkを動かす
+
+```shell
+$ yarn watch
+```
+
+```shell
+$ sh executePubSub.sh [fitbit|withings|myfitnesspal]
+```
+
+
+## ローカルでの記録方法
+
+※1日のみ記録したい場合は同じ日付を入れる
+
+```shell
+$ ts-node executeForPeriod/fitbit.ts 2022/04/16 2022/04/17
+$ ts-node executeForPeriod/myfitnesspall.ts 2022/04/16 2022/04/17
+$ ts-node executeForPeriod/withings.ts 2022/04/16 2022/04/17
+```
