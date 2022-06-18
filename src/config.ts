@@ -33,7 +33,7 @@ export const tokenSheet = {
 
 export const age = 28;
 export const height = 178;
-export const lowerLimitCalorie = 1200;
+export const lowerLimitCalorie = 500;
 export const lowerLimitStep = 1000;
 
 export const withingsBaseUrl = 'https://wbsapi.withings.net';
