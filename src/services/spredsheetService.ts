@@ -102,6 +102,7 @@ export class SpredsheetService {
    * @param weight
    */
   async recordWeight(date: string, weight: number, bmr: number): Promise<void> {
+    console.log(date);
     await this.createDateRow(date);
 
     const row = this.getRowByDate(date);
@@ -124,8 +125,9 @@ export class SpredsheetService {
         row[workSheet.headerColums.bmr.name] = weights[i].bmr;
         await row.save();
       } else {
+        console.log(weights[i]);
         await this.sheet.addRow({
-          [workSheet.headerColums.date.name]: weights[i].date,
+          [workSheet.headerColums.date.name]: weights[i].formattedDate,
           [workSheet.headerColums.weight.name]: weights[i].measure,
           [workSheet.headerColums.bmr.name]: weights[i].bmr,
         });

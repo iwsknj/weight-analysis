@@ -31,10 +31,10 @@
     "clean": "gts clean",
     "compile": "tsc",
     "fix": "gts fix",
-    "pretest": "yarn run compile",
-    "posttest": "yarn run lint",
+    "pretest": "npm run compile",
+    "posttest": "npm run lint",
     "start": "functions-framework --source=build/src/ --target=recordHealthCareData --signature-type=event",
     "watch": "concurrently \"tsc -w\" \"nodemon --watch ./build/ --exec yarn start\"",
-    "deploy": "yarn run compile && sh deploy.sh"
+    "deploy": "npm run compile && sh deploy.sh"
   }
 }

@@ -11,7 +11,7 @@
 ## デプロイ方法
 
 ```sh
-$ gcloud functions deploy recordHealthCareData --runtime nodejs16 \
+$ gcloud functions deploy recordHealthCareData --runtime nodejs20 \
    --region=asia-northeast1 \
    --trigger-resource [TOPIC_NAME] \
    --trigger-event google.pubsub.topic.publish \

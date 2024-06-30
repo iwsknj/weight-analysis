@@ -9,30 +9,23 @@ export async function recordWeight() {
   await withings.refreshToken();
 
   const now = dayjs();
-  const dayBefore = now.subtract(1, 'day');
-  const dayBeforeDate = dayBefore.format('YYYY/MM/DD');
+  const targetDate = now.format('YYYY/MM/DD');
   const records = await withings.getBodyWeightRecords(
-    dayBefore.hour(0).minute(0).second(0).unix(),
-    dayBefore.hour(23).minute(59).second(59).unix()
+    now.hour(0).minute(0).second(0).unix(),
+    now.hour(23).minute(59).second(59).unix()
   );
 
   if (!records || records.length === 0) {
     return;
   }
 
-  const dayBeforeRecord = records.find(
-    record => record.formattedDate === dayBeforeDate
-  );
+  const record = records.find(record => record.formattedDate === targetDate);
 
-  if (!dayBeforeRecord) {
+  if (!record) {
     return;
   }
 
   const spredsheetService = new SpredsheetService();
   await spredsheetService.init();
-  await spredsheetService.recordWeight(
-    dayBeforeDate,
-    dayBeforeRecord.measure,
-    dayBeforeRecord.bmr
-  );
+  await spredsheetService.recordWeight(targetDate, record.measure, record.bmr);
 }
