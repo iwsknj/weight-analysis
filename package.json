@@ -34,7 +34,6 @@
     "pretest": "npm run compile",
     "posttest": "npm run lint",
     "start": "functions-framework --source=build/src/ --target=recordHealthCareData --signature-type=event",
-    "watch": "concurrently \"tsc -w\" \"nodemon --watch ./build/ --exec yarn start\"",
-    "deploy": "npm run compile && sh deploy.sh"
+    "watch": "concurrently \"tsc -w\" \"nodemon --watch ./build/ --exec yarn start\"d"
   }
 }
